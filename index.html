@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#153547" />
+  <meta name="description" content="Registro personal de entrada y salida, con comentarios y exportación." />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icon-192.png" type="image/png" />
+  <title>Mi registro de jornada</title>
+  <style>
+    :root { color-scheme: light; --ink:#183040; --muted:#5b6d77; --outline:#dce5e7; --page:#f3f6f6; --white:#fff; --teal:#116c63; --teal-light:#e5f4ef; --orange:#a34a2c; --orange-light:#fcf0e9; --navy:#153547; --shadow:0 12px 32px rgba(21,53,71,.07); }
+    * { box-sizing: border-box; }
+    [hidden] { display:none !important; }
+    html { -webkit-text-size-adjust:100%; }
+    body { margin:0; background:var(--page); color:var(--ink); font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; font-size:15px; line-height:1.5; }
+    button,input,select,textarea { font:inherit; }
+    button { cursor:pointer; touch-action:manipulation; }
+    button:disabled { cursor:not-allowed; opacity:.45; }
+    button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible { outline:3px solid #72b9d4; outline-offset:2px; }
+    .container { width:min(100% - 36px, 1000px); margin-inline:auto; padding-bottom:50px; }
+    .masthead { background:var(--navy); color:white; padding:25px 0 29px; }
+    .masthead-inner { display:flex; justify-content:space-between; gap:20px; align-items:center; }
+    .eyebrow { margin:0 0 5px; font-size:11px; font-weight:750; letter-spacing:.15em; text-transform:uppercase; color:#a9d4d1; }
+    h1 { font-size:clamp(23px,4vw,32px); line-height:1.2; font-weight:750; letter-spacing:-.025em; margin:0; }
+    .head-desc { color:#d0dedf; margin:8px 0 0; font-size:13px; }
+    .head-symbol { display:grid; place-items:center; flex:0 0 54px; height:54px; border:1px solid #547483; border-radius:17px; color:#d5f3ed; }
+    .content { margin-top:23px; display:grid; gap:18px; }
+    .panel { background:var(--white); border:1px solid var(--outline); border-radius:19px; padding:25px; box-shadow:var(--shadow); }
+    .panel-top { display:flex; align-items:center; justify-content:space-between; gap:14px; }
+    .section-name { font-size:18px; margin:0; line-height:1.4; letter-spacing:-.01em; }
+    .status { background:#edf2f2; border-radius:999px; color:#43616b; padding:6px 12px; font-size:12px; font-weight:700; text-align:center; }
+    .status.open { background:var(--teal-light); color:var(--teal); }
+    .clock { margin:20px 0 0; color:var(--navy); font-size:clamp(45px,9vw,65px); letter-spacing:-.055em; line-height:1.13; font-variant-numeric:tabular-nums; font-weight:760; }
+    .today-label { margin:3px 0 23px; color:var(--muted); text-transform:capitalize; font-size:14px; }
+    .mark-buttons { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .mark { border:0; color:white; border-radius:13px; min-height:78px; padding:14px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:4px; font-weight:750; font-size:20px; transition:transform .13s ease, opacity .13s ease; }
+    .mark:not(:disabled):active { transform:scale(.985); }
+    .mark small { font-size:11px; font-weight:500; opacity:.87; }
+    .mark-in { background:var(--teal); }
+    .mark-out { background:var(--orange); }
+    .comment-control { margin-top:19px; border-top:1px solid var(--outline); padding-top:16px; }
+    .checkbox-row { display:inline-flex; align-items:center; gap:10px; font-weight:650; font-size:14px; cursor:pointer; }
+    .checkbox-row input { accent-color:var(--teal); width:18px; height:18px; margin:0; }
+    .comment-input { width:100%; display:block; margin-top:12px; border:1px solid #bacbcf; border-radius:10px; padding:12px 13px; min-height:92px; resize:vertical; color:var(--ink); background:white; }
+    .save-note { margin:12px 0 0; font-size:12px; color:var(--muted); }
+    .stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+    .stat { padding:18px 20px; border:1px solid var(--outline); border-radius:15px; background:white; }
+    .stat-label { margin:0 0 4px; font-size:12px; font-weight:600; color:var(--muted); }
+    .stat-number { margin:0; font-size:clamp(21px,3vw,28px); letter-spacing:-.025em; line-height:1.3; font-weight:750; font-variant-numeric:tabular-nums; }
+    .stat-note { font-size:11px; color:var(--muted); margin:4px 0 0; }
+    .history-header { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:14px; margin-bottom:18px; }
+    .history-intro { margin:5px 0 0; font-size:13px; color:var(--muted); }
+    .toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    .btn { border-radius:10px; border:1px solid #bfcdd1; background:white; color:var(--ink); font-weight:650; padding:10px 13px; min-height:42px; line-height:1.2; font-size:13px; }
+    .btn:hover:not(:disabled) { background:#f5f9f9; }
+    .btn.active { border-color:var(--navy); background:var(--navy); color:white; }
+    .btn.primary { background:var(--navy); color:white; border-color:var(--navy); }
+    .btn.danger { color:#ae3b31; border-color:#dbb6b1; }
+    .filters { display:flex; align-items:center; gap:9px; margin-bottom:14px; flex-wrap:wrap; }
+    .filter-label { color:var(--muted); font-size:13px; font-weight:650; }
+    .control { min-height:41px; border:1px solid #c6d2d4; border-radius:9px; padding:8px 10px; color:var(--ink); background:white; max-width:100%; }
+    .table-wrap { width:100%; overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th { text-align:left; color:#576e79; font-size:12px; font-weight:750; padding:12px 10px; white-space:nowrap; border-bottom:1px solid #d5e2e4; background:#f7faf9; }
+    td { padding:13px 10px; border-bottom:1px solid #e8eeef; vertical-align:top; }
+    tbody tr:last-child td { border-bottom:0; }
+    .nowrap { white-space:nowrap; }
+    .typetag { display:inline-flex; font-size:12px; font-weight:750; padding:4px 9px; border-radius:7px; }
+    .typetag.in { color:var(--teal); background:var(--teal-light); }
+    .typetag.out { color:var(--orange); background:var(--orange-light); }
+    .record-note { white-space:pre-wrap; overflow-wrap:anywhere; max-width:340px; }
+    .muted { color:var(--muted); }
+    .edit-action { border:1px solid #cedbde; border-radius:8px; font-size:12px; font-weight:650; background:white; padding:6px 10px; color:var(--navy); }
+    .only-edit { display:none; }
+    .is-edit .only-edit { display:table-cell; }
+    .empty-row td { padding:34px 12px; text-align:center; color:var(--muted); }
+    .history-footer { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-top:18px; border-top:1px solid var(--outline); padding-top:17px; }
+    .export-buttons { display:flex; flex-wrap:wrap; gap:8px; }
+    .fineprint { font-size:12px; color:var(--muted); margin:0; }
+    .manual-add { margin:0 0 14px; }
+    .dialog { width:min(100% - 28px,470px); max-height:min(92vh,800px); overflow-y:auto; border:0; border-radius:18px; box-shadow:0 25px 85px rgba(0,0,0,.3); padding:25px; color:var(--ink); }
+    .dialog::backdrop { background:rgba(13,31,40,.58); }
+    .dialog h2 { margin:0 0 18px; font-size:22px; }
+    .field { display:grid; gap:6px; margin-bottom:15px; }
+    .field label { font-size:13px; color:var(--ink); font-weight:700; }
+    .field input,.field select,.field textarea { width:100%; min-width:0; padding:11px; border:1px solid #c4d1d4; border-radius:9px; background:white; color:var(--ink); }
+    .field textarea { min-height:95px; resize:vertical; }
+    .dialog-actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:flex-end; margin-top:22px; }
+    .dialog-actions .delete { margin-right:auto; }
+    .toast { position:fixed; left:50%; bottom:calc(20px + env(safe-area-inset-bottom)); transform:translateX(-50%); background:#153547; color:white; font-size:13px; border-radius:10px; padding:12px 18px; box-shadow:0 8px 25px #19334344; max-width:min(90vw,500px); text-align:center; z-index:999; }
+    .info { font-size:12px; color:var(--muted); text-align:center; margin:2px 0 0; }
+    @media (max-width:700px) { .container { width:min(100% - 24px,1000px); } .masthead { padding:22px 0 25px; } .panel { padding:19px 16px; border-radius:15px; } .content { margin-top:14px; gap:12px; } .mark { min-height:82px; font-size:19px; } .stats { gap:7px; } .stat { padding:14px 10px; border-radius:12px; } .stat-note { display:none; } .history-header { flex-direction:column; align-items:stretch; } .head-symbol { height:47px; flex-basis:47px; } .history-header .toolbar { justify-content:flex-start; }
+      table,thead,tbody,tr,td { display:block; } thead { display:none; } tbody { display:grid; gap:10px; } tbody tr { border:1px solid var(--outline); border-radius:12px; padding:11px 13px; background:white; } tbody tr.empty-row { border:0; } td { display:flex; justify-content:space-between; gap:13px; align-items:flex-start; padding:5px 0; border:0; text-align:right; } td::before { content:attr(data-label); text-align:left; flex:0 0 88px; font-size:12px; color:var(--muted); font-weight:650; } td.record-note { max-width:none; } td.record-note span { max-width:calc(100% - 100px); } .is-edit .only-edit { display:flex; } td.only-edit::before { content:""; } td.only-edit { justify-content:flex-end; } .empty-row td { display:block; text-align:center; } .empty-row td::before { content:none; }
+    }
+    @media (max-width:390px) { .stats { grid-template-columns:1fr 1fr; } .stat:last-child { grid-column:span 2; } .mark-buttons { gap:8px; } .mark { padding:10px 4px; font-size:18px; } .clock { font-size:46px; } }
+  </style>
+</head>
+<body>
+  <header class="masthead">
+    <div class="container masthead-inner">
+      <div>
+        <p class="eyebrow">Control personal de asistencia</p>
+        <h1>Mi registro de jornada</h1>
+        <p class="head-desc">Entradas, salidas y observaciones en un solo lugar.</p>
+      </div>
+      <div class="head-symbol" aria-hidden="true">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg>
+      </div>
+    </div>
+  </header>
+  <main class="container content">
+    <section class="panel" aria-labelledby="mark-title">
+      <div class="panel-top">
+        <h2 class="section-name" id="mark-title">Marcar asistencia</h2>
+        <span id="status" class="status">Sin jornada activa</span>
+      </div>
+      <div class="clock" id="clock" aria-label="Hora actual">--:--:--</div>
+      <p id="dateToday" class="today-label"></p>
+      <div class="mark-buttons">
+        <button type="button" id="entryBtn" class="mark mark-in">Entrada<small>Registrar hora actual</small></button>
+        <button type="button" id="exitBtn" class="mark mark-out">Salida<small>Registrar hora actual</small></button>
+      </div>
+      <div class="comment-control">
+        <label class="checkbox-row"><input id="withComment" type="checkbox" /> Agregar comentario</label>
+        <textarea id="comment" class="comment-input" placeholder="Ej.: llegada atrasada por cita médica, salida anticipada u horas extra por cierre de proyecto…" maxlength="2000" hidden></textarea>
+      </div>
+      <p class="save-note">La marcación utiliza la fecha y hora de tu dispositivo. Puedes corregir los registros en «Modo edición».</p>
+    </section>
+
+    <div class="stats" aria-label="Resumen de horas">
+      <div class="stat"><p class="stat-label">Tiempo de hoy</p><p id="todayHours" class="stat-number">00:00</p><p class="stat-note">Incluye jornada en curso</p></div>
+      <div class="stat"><p class="stat-label">Tiempo del mes</p><p id="monthHours" class="stat-number">00:00</p><p class="stat-note">Suma de intervalos registrados</p></div>
+      <div class="stat"><p class="stat-label">Registros</p><p id="recordCount" class="stat-number">0</p><p class="stat-note">Marcaciones guardadas</p></div>
+    </div>
+
+    <section class="panel" aria-labelledby="history-title">
+      <div class="history-header">
+        <div>
+          <h2 class="section-name" id="history-title">Historial de marcaciones</h2>
+          <p class="history-intro">Edita registros y descarga tus datos cuando quieras.</p>
+        </div>
+        <div class="toolbar">
+          <button type="button" id="editModeBtn" class="btn" aria-pressed="false">Modo edición</button>
+        </div>
+      </div>
+      <div class="filters">
+        <label for="periodFilter" class="filter-label">Mostrar</label>
+        <select class="control" id="periodFilter">
+          <option value="month">Por mes</option>
+          <option value="today">Hoy</option>
+          <option value="all">Todos</option>
+        </select>
+        <label for="monthFilter" class="filter-label" id="monthLabel">Mes</label>
+        <input type="month" class="control" id="monthFilter" />
+      </div>
+      <div id="manualAdd" class="manual-add" hidden><button type="button" id="addBtn" class="btn primary">+ Agregar registro manual</button></div>
+      <div class="table-wrap">
+        <table id="eventsTable" aria-label="Marcaciones guardadas">
+          <thead><tr><th>Fecha</th><th>Hora</th><th>Marcación</th><th>Comentario</th><th>Duración</th><th class="only-edit">Acción</th></tr></thead>
+          <tbody id="eventsBody"></tbody>
+        </table>
+      </div>
+      <div class="history-footer">
+        <div class="export-buttons">
+          <button type="button" id="csvBtn" class="btn">Exportar CSV</button>
+          <button type="button" id="jsonBtn" class="btn">Copia JSON</button>
+          <button type="button" id="importBtn" class="btn">Importar copia</button>
+          <input id="jsonFile" type="file" accept=".json,application/json" hidden />
+        </div>
+        <p class="fineprint">El CSV incluye todos los registros, sin filtros.</p>
+      </div>
+    </section>
+    <p class="info">Los datos se almacenan solo en este navegador y dispositivo; no se sincronizan automáticamente. Realiza copias de seguridad periódicas. Esta aplicación no reemplaza un sistema oficial de control de asistencia.</p>
+  </main>
+
+  <dialog id="editDialog" class="dialog" aria-labelledby="dialogTitle">
+    <form id="editForm">
+      <h2 id="dialogTitle">Editar registro</h2>
+      <div class="field"><label for="editType">Tipo de marcación</label><select id="editType" required><option value="entrada">Entrada</option><option value="salida">Salida</option></select></div>
+      <div class="field"><label for="editDate">Fecha y hora</label><input id="editDate" type="datetime-local" step="1" required /></div>
+      <div class="field"><label for="editNote">Comentario (opcional)</label><textarea id="editNote" maxlength="2000" placeholder="Detalle de la marcación"></textarea></div>
+      <div class="dialog-actions">
+        <button type="button" class="btn danger delete" id="deleteBtn">Eliminar</button>
+        <button type="button" class="btn" id="cancelBtn">Cancelar</button>
+        <button type="submit" class="btn primary">Guardar cambios</button>
+      </div>
+    </form>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script>
+  (() => {
+    'use strict';
+    const KEY = 'registro_de_jornada_v1';
+    const $ = (id) => document.getElementById(id);
+    const dateFmt = new Intl.DateTimeFormat('es-CL',{year:'numeric',month:'2-digit',day:'2-digit'});
+    const timeFmt = new Intl.DateTimeFormat('es-CL',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+    const humanDateFmt = new Intl.DateTimeFormat('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    let records = load();
+    let editMode = false;
+    let editingId = null;
+    let toastTimer = null;
+
+    function id() { return 'r_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,10); }
+    function load() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(KEY) || '[]');
+        if (!Array.isArray(parsed)) return [];
+        return parsed.filter(isValid).map(r => ({id:String(r.id),type:r.type,iso:new Date(r.iso).toISOString(),note:String(r.note||'').slice(0,2000)}));
+      } catch (err) { console.error(err); return []; }
+    }
+    function isValid(r) { return r && (r.type === 'entrada' || r.type === 'salida') && typeof r.id === 'string' && Number.isFinite(new Date(r.iso).getTime()); }
+    function commit(next, message) {
+      try { localStorage.setItem(KEY, JSON.stringify(next)); }
+      catch(err) { alert('No se pudieron guardar los datos en el navegador. Comprueba el espacio o la configuración de privacidad.'); return false; }
+      records=next; render(); if(message) toast(message); return true;
+    }
+    function toast(message) {
+      clearTimeout(toastTimer);
+      $('toast').textContent=message; $('toast').hidden=false;
+      toastTimer=setTimeout(() => { $('toast').hidden=true; }, 2700);
+    }
+    const ordered = () => [...records].sort((a,b) => {
+      const ta=Date.parse(a.iso), tb=Date.parse(b.iso);
+      const seconds=Math.floor(ta/1000)-Math.floor(tb/1000);
+      if (seconds) return seconds;
+      // Manual editing uses whole seconds; within the same second, pair entry before exit.
+      if (a.type!==b.type) return a.type==='entrada'?-1:1;
+      return ta-tb || a.id.localeCompare(b.id);
+    });
+    function analysis() {
+      const sorted=ordered(); const durations=new Map(); const intervals=[];
+      let active=null;
+      for (const r of sorted) {
+        if (r.type === 'entrada') active=r;
+        else if(active) {
+          const start=Date.parse(active.iso), end=Date.parse(r.iso);
+          if(end>=start) { durations.set(r.id,end-start); intervals.push({start,end}); }
+          active=null;
+        }
+      }
+      const last=sorted.at(-1);
+      // The last chronologically registered event controls whether a shift is open.
+      const open=last?.type==='entrada' ? last : null;
+      if(open) intervals.push({start:Date.parse(open.iso),end:Date.now()});
+      return {durations,intervals,open};
+    }
+    function secondsText(milliseconds) {
+      const minutes=Math.max(0,Math.floor(milliseconds/60000));
+      return String(Math.floor(minutes/60)).padStart(2,'0')+':'+String(minutes%60).padStart(2,'0');
+    }
+    function localDateTime(d) {
+      const pad=n => String(n).padStart(2,'0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+    function todayStart(now=new Date()) { return new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime(); }
+    function totalWithin(intervals,start,end) {
+      return intervals.reduce((sum,x)=>sum+Math.max(0,Math.min(x.end,end)-Math.max(x.start,start)),0);
+    }
+    function refreshLive() {
+      const now=new Date();
+      $('clock').textContent=timeFmt.format(now);
+      $('dateToday').textContent=humanDateFmt.format(now);
+      const a=analysis();
+      const nextDay=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1).getTime();
+      const startMonth=new Date(now.getFullYear(),now.getMonth(),1).getTime();
+      const endMonth=new Date(now.getFullYear(),now.getMonth()+1,1).getTime();
+      $('todayHours').textContent=secondsText(totalWithin(a.intervals,todayStart(now),nextDay));
+      $('monthHours').textContent=secondsText(totalWithin(a.intervals,startMonth,endMonth));
+      $('recordCount').textContent=String(records.length);
+      $('status').textContent=a.open?'Jornada iniciada':'Sin jornada activa';
+      $('status').classList.toggle('open',!!a.open);
+      $('entryBtn').disabled=!!a.open;
+      $('exitBtn').disabled=!a.open;
+    }
+    function makeCell(label,content,className='') {
+      const td=document.createElement('td');td.dataset.label=label;if(className)td.className=className;
+      if(content instanceof Node) td.append(content); else td.textContent=content;
+      return td;
+    }
+    function renderTable() {
+      const body=$('eventsBody');body.replaceChildren();
+      const filter=$('periodFilter').value; const month=$('monthFilter').value; const today=new Date();
+      const todayKey=localDateTime(today).slice(0,10);
+      const result=analysis();
+      const selected=ordered().reverse().filter(r=>{
+        const local=localDateTime(new Date(r.iso));
+        return filter==='all'||(filter==='today'&&local.slice(0,10)===todayKey)||(filter==='month'&&local.slice(0,7)===month);
+      });
+      if(!selected.length) {
+        const tr=document.createElement('tr'); tr.className='empty-row';
+        const td=document.createElement('td'); td.colSpan=6;td.textContent='No hay marcaciones para el período seleccionado.';
+        tr.append(td);body.append(tr);return;
+      }
+      for(const r of selected) {
+        const tr=document.createElement('tr');
+        const d=new Date(r.iso);tr.append(makeCell('Fecha',dateFmt.format(d),'nowrap'));
+        tr.append(makeCell('Hora',timeFmt.format(d),'nowrap'));
+        const type=document.createElement('span');type.className='typetag '+(r.type==='entrada'?'in':'out');type.textContent=r.type==='entrada'?'Entrada':'Salida';
+        tr.append(makeCell('Marcación',type));
+        const note=document.createElement('span');note.textContent=r.note||'—';if(!r.note)note.className='muted';
+        tr.append(makeCell('Comentario',note,'record-note'));
+        tr.append(makeCell('Duración',result.durations.has(r.id)?secondsText(result.durations.get(r.id)):'—','nowrap'));
+        const edit=document.createElement('button');edit.type='button';edit.className='edit-action';edit.textContent='Editar';edit.setAttribute('aria-label','Editar '+r.type+' del '+dateFmt.format(d));edit.addEventListener('click',()=>openEdit(r.id));
+        tr.append(makeCell('Acción',edit,'only-edit'));
+        body.append(tr);
+      }
+    }
+    function render() { refreshLive(); renderTable(); }
+    function mark(type) {
+      const open=analysis().open;
+      if((type==='entrada'&&open)||(type==='salida'&&!open)) {
+        toast('La secuencia de entradas y salidas no permite esa marcación.');return;
+      }
+      const note=$('withComment').checked ? $('comment').value.trim() : '';
+      const entry={id:id(),type,iso:new Date().toISOString(),note};
+      if(commit([...records,entry],type==='entrada'?'Entrada registrada':'Salida registrada')) {
+        $('withComment').checked=false;$('comment').value='';$('comment').hidden=true;
+      }
+    }
+    function openEdit(recordId=null) {
+      editingId=recordId;
+      const r=records.find(x=>x.id===recordId);
+      $('dialogTitle').textContent=r?'Editar marcación':'Agregar marcación';
+      $('editType').value=r?.type||'entrada';
+      $('editDate').value=localDateTime(r?new Date(r.iso):new Date());
+      $('editNote').value=r?.note||'';
+      $('deleteBtn').hidden=!r;
+      $('editDialog').showModal();
+    }
+    function closeEdit() { $('editDialog').close(); }
+    function saveEdit(evt) {
+      evt.preventDefault();
+      const time=new Date($('editDate').value);
+      if(!Number.isFinite(time.getTime())) { alert('Ingresa una fecha y hora válidas.'); return; }
+      const original=records.find(x=>x.id===editingId);
+      const iso=original && $('editDate').value===localDateTime(new Date(original.iso)) ? original.iso : time.toISOString();
+      const data={type:$('editType').value,iso,note:$('editNote').value.trim().slice(0,2000)};
+      if(editingId) {
+        const next=records.map(x=>x.id===editingId?{...x,...data}:x);
+        if(commit(next,'Marcación actualizada')) closeEdit();
+      } else if(commit([...records,{id:id(),...data}],'Marcación agregada')) closeEdit();
+    }
+    function deleteRecord() {
+      if(!editingId||!confirm('¿Eliminar esta marcación? Esta acción no se puede deshacer.'))return;
+      if(commit(records.filter(x=>x.id!==editingId),'Marcación eliminada'))closeEdit();
+    }
+    function csvEscape(s) {return '"'+String(s??'').replaceAll('"','""')+'"';}
+    function download(name,contents,mime) {
+      const object=URL.createObjectURL(new Blob([contents],{type:mime}));
+      const link=document.createElement('a'); link.href=object;link.download=name;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(object),15000);
+    }
+    function suffix() {return localDateTime(new Date()).slice(0,10);}
+    function exportCSV() {
+      const duration=analysis().durations;
+      const lines=[['Fecha','Hora','Marcación','Comentario','Duración (hh:mm)']];
+      for(const r of ordered()) {
+        const d=new Date(r.iso);
+        lines.push([dateFmt.format(d),timeFmt.format(d),r.type==='entrada'?'Entrada':'Salida',r.note||'',duration.has(r.id)?secondsText(duration.get(r.id)):'']);
+      }
+      const csv='\ufeff'+lines.map(row=>row.map(csvEscape).join(';')).join('\r\n')+'\r\n';
+      download('marcaciones_'+suffix()+'.csv',csv,'text/csv;charset=utf-8');toast('CSV generado');
+    }
+    function exportJSON() {
+      download('respaldo_marcaciones_'+suffix()+'.json',JSON.stringify({app:'mi-registro-de-jornada',version:1,exportedAt:new Date().toISOString(),records:ordered()},null,2),'application/json;charset=utf-8');toast('Copia de seguridad generada');
+    }
+    async function importJSON(evt) {
+      const file=evt.target.files?.[0];evt.target.value='';if(!file)return;
+      if(file.size>5_000_000){alert('El archivo es demasiado grande (máximo 5 MB).');return;}
+      try {
+        const data=JSON.parse(await file.text());
+        if(data.app!=='mi-registro-de-jornada'||!Array.isArray(data.records)||data.records.length>50000||!data.records.every(isValid))throw new Error('Formato inválido');
+        const ids=new Set();
+        const next=data.records.map(r=>{const fresh=ids.has(r.id)?id():r.id;ids.add(fresh);return {id:fresh,type:r.type,iso:new Date(r.iso).toISOString(),note:String(r.note||'').slice(0,2000)};});
+        if(!confirm(`Se importarán ${next.length} marcaciones. Esto REEMPLAZARÁ los ${records.length} registros actualmente guardados en este navegador. ¿Continuar?`))return;
+        if(commit(next,'Copia restaurada correctamente')) {
+          $('periodFilter').value='all'; updateFilters();
+        }
+      } catch(err) { alert('No se pudo importar el archivo. Selecciona una copia JSON generada por esta aplicación.'); }
+    }
+    function updateFilters() {const show=$('periodFilter').value==='month';$('monthFilter').hidden=!show;$('monthLabel').hidden=!show;renderTable();}
+
+    $('entryBtn').addEventListener('click',()=>mark('entrada'));
+    $('exitBtn').addEventListener('click',()=>mark('salida'));
+    $('withComment').addEventListener('change',e=>{ $('comment').hidden=!e.target.checked;if(e.target.checked)$('comment').focus(); });
+    $('editModeBtn').addEventListener('click',()=>{
+      editMode=!editMode;$('eventsTable').classList.toggle('is-edit',editMode);
+      $('manualAdd').hidden=!editMode;$('editModeBtn').classList.toggle('active',editMode);
+      $('editModeBtn').setAttribute('aria-pressed',String(editMode));
+      $('editModeBtn').textContent=editMode?'Finalizar edición':'Modo edición';
+    });
+    $('periodFilter').addEventListener('change',updateFilters);
+    $('monthFilter').addEventListener('change',renderTable);
+    $('addBtn').addEventListener('click',()=>openEdit());
+    $('editForm').addEventListener('submit',saveEdit);
+    $('cancelBtn').addEventListener('click',closeEdit);
+    $('deleteBtn').addEventListener('click',deleteRecord);
+    $('csvBtn').addEventListener('click',exportCSV);
+    $('jsonBtn').addEventListener('click',exportJSON);
+    $('importBtn').addEventListener('click',()=>$('jsonFile').click());
+    $('jsonFile').addEventListener('change',importJSON);
+    $('monthFilter').value=localDateTime(new Date()).slice(0,7);
+    updateFilters();render();
+    setInterval(refreshLive,1000);
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)render();});
+    if('serviceWorker' in navigator && location.protocol==='https:') {
+      window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.debug('Sin modo sin conexión:',err)));
+    }
+  })();
+  </script>
+</body>
+</html>

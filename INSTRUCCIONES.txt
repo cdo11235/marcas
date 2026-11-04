@@ -1,0 +1,24 @@
+MI REGISTRO DE JORNADA
+======================
+
+Archivos incluidos:
+- index.html: aplicación web completa.
+- manifest.webmanifest, sw.js e iconos: permiten instalarla como aplicación web (PWA).
+
+PARA USAR EN EL CELULAR
+1. Publica toda la carpeta en un hosting HTTPS (por ejemplo, GitHub Pages o Netlify).
+2. Abre el enlace HTTPS con el navegador de tu teléfono.
+3. En Android/Chrome: menú del navegador > Instalar aplicación o Agregar a pantalla principal.
+   En iPhone/Safari: Compartir > Agregar a inicio.
+4. Después de la primera carga correcta, la app instalada funciona sin conexión en el mismo dispositivo.
+
+Alternativa: usa el archivo independiente control_asistencia.html (entregado aparte) para abrir el HTML sin hosting, si tu navegador permite archivos locales. Para persistencia más estable e instalación, prefiere HTTPS.
+
+IMPORTANTE SOBRE LOS DATOS
+- Los registros se guardan con localStorage en el navegador/dispositivo.
+- No existe una cuenta ni sincronización entre dispositivos.
+- Borrar los datos del navegador o cambiar de teléfono puede eliminar los registros.
+- Exportar CSV: tabla para Excel u otra planilla. Contiene todos los registros.
+- Copia JSON: respaldo restaurable en esta app; "Importar copia" reemplaza el historial actual.
+- El resumen de tiempo suma intervalos entre una entrada y la siguiente salida. En casos de registros incompletos o desordenados, corrige con Modo edición.
+- La aplicación es un registro personal, no un sistema oficial de control de asistencia laboral.
