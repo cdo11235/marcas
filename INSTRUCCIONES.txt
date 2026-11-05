@@ -1,24 +1,101 @@
-MI REGISTRO DE JORNADA
-======================
+MI REGISTRO DE JORNADA — VERSIÓN CON CORREO AUTOMÁTICO
+===================================================
 
-Archivos incluidos:
-- index.html: aplicación web completa.
-- manifest.webmanifest, sw.js e iconos: permiten instalarla como aplicación web (PWA).
+Qué hace:
+- Marcar entrada y salida desde el celular, con hora del servidor.
+- Comentarios opcionales; ver, editar, agregar y eliminar marcaciones.
+- Guardar permanentemente los registros en una hoja de Google Sheets privada.
+- Exportar CSV o respaldo JSON desde la app.
+- Enviar por correo un CSV del MES ANTERIOR automáticamente, cada día 1.
+- Reintentar hasta el día 7 si el envío programado falla.
+- Funciona con el celular apagado cuando Google Apps Script ya está configurado.
 
-PARA USAR EN EL CELULAR
-1. Publica toda la carpeta en un hosting HTTPS (por ejemplo, GitHub Pages o Netlify).
-2. Abre el enlace HTTPS con el navegador de tu teléfono.
-3. En Android/Chrome: menú del navegador > Instalar aplicación o Agregar a pantalla principal.
-   En iPhone/Safari: Compartir > Agregar a inicio.
-4. Después de la primera carga correcta, la app instalada funciona sin conexión en el mismo dispositivo.
+CONFIGURACIÓN INICIAL (aprox. 10 pasos)
+--------------------------------------
+1. Entra a Google Sheets con la cuenta desde la cual se enviará el correo.
+2. Crea una hoja de cálculo vacía, por ejemplo: "Mi registro de jornada".
+3. En esa hoja, ve a Extensiones > Apps Script.
+4. Abre el archivo "Código.gs" y sustituye su contenido por el archivo
+   "Code.gs" de este paquete.
+5. En la primera línea de configuración de Code.gs, sustituye
+   CAMBIAR_POR_TU_CORREO@ejemplo.com por el correo que recibirá el informe.
+   Puedes usar una dirección diferente de la cuenta que ejecuta Apps Script.
+6. En Apps Script, pulsa + > HTML, nómbralo exactamente "Index" y pega el
+   contenido completo del archivo "Index.html" de este paquete.
+7. Opcional pero RECOMENDADO: en Configuración del proyecto, activa
+   «Mostrar archivo de manifiesto appsscript.json» y sustituye su contenido
+   por el appsscript.json del paquete (zona horaria America/Santiago).
+   Comprueba también que la zona horaria del proyecto sea Santiago.
+8. Guarda. En el menú desplegable de funciones, elige «instalarSistema»,
+   haz clic en «Ejecutar» y autoriza los permisos solicitados.
+   La función crea la pestaña «Marcaciones» y un activador diario.
+9. En Apps Script selecciona Implementar > Nueva implementación >
+   Aplicación web. Configura:
+   - Ejecutar como: Yo
+   - Quién tiene acceso: Solo yo
+   Confirma y copia la URL de la aplicación web.
+10. Abre ESA URL desde Chrome en el celular, estando conectado con la misma
+    cuenta de Google. Añade el acceso a la pantalla de inicio desde el menú
+    del navegador para abrirla como acceso directo.
 
-Alternativa: usa el archivo independiente control_asistencia.html (entregado aparte) para abrir el HTML sin hosting, si tu navegador permite archivos locales. Para persistencia más estable e instalación, prefiere HTTPS.
+PRUEBAS
+-------
+- Haz una entrada y una salida desde la app y revisa la pestaña Marcaciones
+  de Google Sheets.
+- En el editor de Apps Script, ejecuta «enviarInformePrueba».
+  Se enviará un correo marcado [PRUEBA] con el CSV del mes anterior (puede
+  estar vacío si todavía no hay registros de ese mes).
+- El envío automático real se hará el día 1 del mes siguiente alrededor de
+  las 08:00 de Santiago (el activador puede ejecutarse dentro de esa hora).
+  Si falla, se volverá a intentar una vez al día hasta el día 7.
+- Solo envía una copia automática por mes, registrando su estado al terminar.
 
-IMPORTANTE SOBRE LOS DATOS
-- Los registros se guardan con localStorage en el navegador/dispositivo.
-- No existe una cuenta ni sincronización entre dispositivos.
-- Borrar los datos del navegador o cambiar de teléfono puede eliminar los registros.
-- Exportar CSV: tabla para Excel u otra planilla. Contiene todos los registros.
-- Copia JSON: respaldo restaurable en esta app; "Importar copia" reemplaza el historial actual.
-- El resumen de tiempo suma intervalos entre una entrada y la siguiente salida. En casos de registros incompletos o desordenados, corrige con Modo edición.
-- La aplicación es un registro personal, no un sistema oficial de control de asistencia laboral.
+SI YA ESTABAS USANDO LA VERSIÓN ANTERIOR
+---------------------------------------
+1. Abre la aplicación HTML antigua desde el mismo navegador en el que ya
+   guardaste marcaciones.
+2. Pulsa «Copia JSON» y conserva el archivo.
+3. Abre la nueva versión web desde Google Apps Script.
+4. Pulsa «Importar copia» y elige ese JSON. ATENCIÓN: esta acción reemplaza
+   todos los registros existentes en la hoja; hazla ANTES de nuevas marcas.
+
+IMPORTANTE
+----------
+- La versión de Google Apps Script necesita conexión para guardar marcaciones.
+  Si no aparece «Sincronizado con Google Sheets», comprueba antes de cerrar.
+- No compartas la hoja ni habilites acceso «Cualquier persona» a la app;
+  los registros contienen información de tus horarios y comentarios.
+- Esta versión usa Google Apps Script y MailApp, sujeto a cuotas y a los
+  permisos y disponibilidad de Google; los correos no pueden garantizarse
+  al 100% si la cuenta pierde permisos o supera una cuota.
+- Si cambias Code.gs o Index.html tras publicar, vuelve a desplegar una
+  versión de la aplicación web para que los cambios aparezcan en la URL.
+- Los registros son personales; no reemplazan un sistema formal de control
+  de asistencia laboral.
+
+ACTUALIZACIÓN: TURNOS AM/PM Y CÁLCULO DE TIEMPOS
+------------------------------------------------
+Turno AM: lunes y martes 08:00–17:30; miércoles a viernes 08:00–16:30.
+Turno PM: lunes y martes 08:30–18:00; miércoles a viernes 08:30–17:00.
+Detección automática por hora de entrada: ANTES de las 08:15 -> AM;
+a partir de las 08:15 -> PM. Para entradas excepcionales, usar
+Modo edición y seleccionar manualmente AM o PM.
+Atraso: tolerancia de 5 minutos. 08:06 en AM -> 1 minuto;
+08:36 en PM -> 1 minuto. Horas extra: solo al alcanzar 30 minutos
+después de la salida pactada; se cuentan TODOS los minutos sobre la hora
+normal, por ejemplo: 17:29 -> 0, 17:30 -> 30, 17:33 -> 33.
+Se registran minutos enteros según la hora visualizada, sin redondear
+segundos al alza. Se consideran horarios de lunes a viernes; los fines
+de semana no reciben cálculo automático de atrasos y horas extra.
+Los valores son estimaciones de permanencia y NO descuentan colación,
+ni establecen aprobación o pago de horas extraordinarias.
+
+SI YA USAS LA VERSIÓN ANTERIOR DE GOOGLE SHEETS:
+1. Exporta primero una copia JSON del historial y guárdala.
+2. Sustituye Code.gs e Index.html por estos archivos SIN borrar la hoja.
+3. Guarda, vuelve a implementar una nueva versión del despliegue existente
+   y abre el enlace de la aplicación. El sistema añadirá la columna Turno
+   a la hoja Marcaciones sin eliminar los registros antiguos.
+4. No ejecutes reemplazarRegistros ni importes JSON si ya existe el historial
+   en Google Sheets, porque eso sustituye los registros previos.
+5. Comprueba el CSV mensual y el historial antes de usar habitualmente.
